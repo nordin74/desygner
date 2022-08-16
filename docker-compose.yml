@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  nginx:
+    image: "bitnami/nginx:1.23"
+    depends_on:
+      - backend
+    networks:
+      - desygner
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./nginx.conf:/opt/bitnami/nginx/conf/server_blocks/desygner.conf
+      - ./backend/public:/app/public:ro
+  database:
+    image: mysql:8
+    networks:
+      - desygner
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=desygner
+      - MYSQL_USER=desygner
+      - MYSQL_PASSWORD=desygner
+    ports:
+      - '3306:3306'
+  backend:
+    image: "bitnami/php-fpm:7.4"
+    depends_on:
+      - database
+    networks:
+      - desygner
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c 'composer install &&
+      chmod 777 public/uploads &&
+      sleep 31 &&
+      php bin/console doctrine:migrations:migrate --no-interaction &&
+      echo "DESYGNER APP READY :)\n" &&
+      php-fpm -F --pid /opt/bitnami/php/tmp/php-fpm.pid -y /opt/bitnami/php/etc/php-fpm.conf'
+  frontend:
+    image: "bitnami/node:16.16.0"
+    depends_on:
+      - backend
+    networks:
+      - desygner
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "yarn install && yarn build-serve"
+networks:
+  desygner:
+    driver: bridge

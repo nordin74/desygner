@@ -1,0 +1,12 @@
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
+
+files_upload:
+  path: /files
+  methods: POST
+  controller: App\Controller\FilesController::upload
+
+files_search:
+  path: /files
+  controller: App\Controller\FilesController::search
